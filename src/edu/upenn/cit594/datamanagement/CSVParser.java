@@ -36,38 +36,49 @@ public class CSVParser {
 		Matcher matcher;
 			// get header line to be columns
 			if ((line = lexer.readRow()) != null) {
-				for (int i = 0; i > line.length; i++) {
-					columnIndexMap.put(line[i], i);
+				for (int i = 0; i < line.length; i++) {
+					columnIndexMap.put(line[i].toLowerCase(), i);
 				}
 			}
+			
+			if((!columnIndexMap.containsKey("zip_code") || 
+					!columnIndexMap.containsKey("partially_vaccinated") || 
+					!columnIndexMap.containsKey("fully_vaccinated") || 
+					!columnIndexMap.containsKey("etl_timestamp"))) {
+				System.out.println("One of required headers is missing");
+				return covidData;
+			}
+			
+			
+			
 			while((line = lexer.readRow()) != null) {
-				if (line[0].length() != 5) {
+				if (line[columnIndexMap.get("zip_code")].length() != 5) {
 					continue;
 				}
-				int zipCode = Integer.parseInt(line[0]);
+				String zipCode = line[columnIndexMap.get("zip_code")];
 				
-				if (line[5] == null || line[5].isEmpty()){
+				if (line[columnIndexMap.get("partially_vaccinated")] == null || line[columnIndexMap.get("partially_vaccinated")].isEmpty()){
 					partiallyVaccinated = 0;
 				}
 				else {
-					partiallyVaccinated = Integer.parseInt(line[5]);
+					partiallyVaccinated = Integer.parseInt(line[columnIndexMap.get("partially_vaccinated")]);
 				}
 				
 				
-				if (line[6] == null|| line[6].isEmpty()){
+				if (line[columnIndexMap.get("fully_vaccinated")] == null|| line[columnIndexMap.get("fully_vaccinated")].isEmpty()){
 					fullyVaccinated = 0;
 				}
 				else {
-					fullyVaccinated = Integer.parseInt(line[6]);
+					fullyVaccinated = Integer.parseInt(line[columnIndexMap.get("fully_vaccinated")]);
 				}
-				if (line[8] == null || line[8].isEmpty()) {
+				if (line[columnIndexMap.get("etl_timestamp")] == null || line[columnIndexMap.get("etl_timestamp")].isEmpty()) {
 					continue;
 				}
 				
 				else {
 					matcher = regex.matcher(line[8]);
 					if (matcher.matches()) {
-						String dateTime = line[8];
+						String dateTime = line[columnIndexMap.get("etl_timestamp")];
 						CovidData covidLine = new CovidData(zipCode, partiallyVaccinated, fullyVaccinated, dateTime);
 						covidData.add(covidLine);
 					}
