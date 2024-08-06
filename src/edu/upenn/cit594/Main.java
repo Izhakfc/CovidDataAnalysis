@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.*;
+import java.util.stream.Collectors;
 
 import edu.upenn.cit594.datamanagement.*;
 import edu.upenn.cit594.logging.Logger;
@@ -31,19 +32,34 @@ public class Main {
         // Process command-line arguments
         processArguments(args);
 
-        // Log initial program execution
-        logEvent(String.join(" ", args));
+        // Check if a log file was specified
+        if (!logger.isInitialized()) {
+            System.out.println("No log file specified. Logging will be disabled.");
+        } else {
+            // Log initial program execution only if a log file was specified
+            logEvent(String.join(" ", args));
+        }
 
         // Initialize components
         dataProcessor = new DataProcessor(covidData, propertyData, populationData);
         ui = new UserInterface();
         scanner = new Scanner(System.in);
 
+        // Display available options immediately after processing arguments
+        List<Integer> availableActions = getAvailableActions();
+
         // Main program loop
         while (true) {
             ui.displayMenu();
             int option = scanner.nextInt();
+            
             logEvent(String.valueOf(option));
+
+            if (!availableActions.contains(option)) {
+                System.out.println("That's not a valid option, try again: \n");
+                logEvent("Invalid option: " + option);
+                continue;
+            }
 
             if (!processMenuOption(option)) {
                 break;
@@ -51,11 +67,17 @@ public class Main {
         }
 
         scanner.close();
+        logger.close();
     }
 
     private static void processArguments(String[] args) throws IOException {
         String filePattern = "^--(?<name>.+?)=(?<value>.+)$";
         Pattern pattern = Pattern.compile(filePattern);
+
+        if (args.length == 0) {
+            System.out.println("No arguments provided. Only basic options will be available.");
+            return;
+        }
 
         try {
             for (String arg : args) {
@@ -65,33 +87,60 @@ public class Main {
                     String value = matcher.group("value");
                     switch (name) {
                         case "population":
-                            PopulationDataReader populationReader = new PopulationDataReader(value);
-                            populationData = populationReader.readPopulationData();
+                            if (!value.isEmpty()) {
+                                PopulationDataReader populationReader = new PopulationDataReader(value);
+                                populationData = populationReader.readPopulationData();
+                            } else {
+                                System.out.println("Population file path is empty.");
+                            }
                             break;
                         case "properties":
-                            PropertyDataReader propertyReader = new PropertyDataReader(value);
-                            propertyData = propertyReader.readPropertyData();
+                            if (!value.isEmpty()) {
+                                PropertyDataReader propertyReader = new PropertyDataReader(value);
+                                propertyData = propertyReader.readPropertyData();
+                            } else {
+                                System.out.println("Properties file path is empty.");
+                            }
                             break;
                         case "covid":
-                            CovidDataReader covidReader = value.endsWith(".csv") ? new CovidCSVReader(value) : new CovidJSONReader(value);
-                            covidData = covidReader.readCovidData();
+                            if (!value.isEmpty()) {
+                                CovidDataReader covidReader = value.endsWith(".csv") ? new CovidCSVReader(value) : new CovidJSONReader(value);
+                                covidData = covidReader.readCovidData();
+                            } else {
+                                System.out.println("Covid file path is empty.");
+                            }
                             break;
                         case "log":
-                            logger.setDestination(value);
+                            if (!value.isEmpty()) {
+                                logger.setDestination(value);
+                            } else {
+                                System.out.println("Log file path is empty. Logging will be disabled.");
+                            }
                             break;
+                        default:
+                            System.out.println("Unknown argument: " + name);
                     }
+                } else {
+                    System.out.println("Invalid argument format: " + arg);
                 }
             }
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            System.out.println("File not found: " + e.getMessage());
         }
     }
 
     private static boolean processMenuOption(int option) {
-        switch (option) {
-            case 0:
-                System.out.println("Exiting the program");
-                return false;
+    	switch (option) {
+	        case 0:
+	            System.out.println("Exiting the program");
+	            return false;
+	        case 1:
+	            List<Integer> availableActions = getAvailableActions();
+	            String result = availableActions.stream()
+	                    .map(String::valueOf)
+	                    .collect(Collectors.joining(" "));
+	            System.out.println(formatOutput(result));
+	            break;
             case 2:
                 logEvent(populationFilename);
                 int totalPopulation = dataProcessor.getTotalPopulation();
@@ -186,11 +235,43 @@ public class Main {
         return true;
     }
     private static void logEvent(String event) {
-        String currentTime = String.valueOf(System.currentTimeMillis());
-        logger.logEvent(currentTime + " " + event);
+        if (logger.isInitialized()) {
+            String currentTime = String.valueOf(System.currentTimeMillis());
+            logger.logEvent(currentTime + " " + event);
+        }
     }
     
     private static String formatOutput(String result) {
         return "BEGIN OUTPUT\n" + result + "\nEND OUTPUT";
+    }
+    
+    private static List<Integer> getAvailableActions() {
+        List<Integer> availableActions = new ArrayList<>();
+        availableActions.add(0); // Exit is always available
+        availableActions.add(1); // List available actions is always available
+        
+        if (!populationData.isEmpty()) {
+            availableActions.add(2); // Total population
+        }
+        
+        if (!covidData.isEmpty() && !populationData.isEmpty()) {
+            availableActions.add(3); // Vaccinations per capita
+        }
+        
+        if (!propertyData.isEmpty()) {
+            availableActions.add(4); // Average market value
+            availableActions.add(5); // Average livable area
+        }
+        
+        if (!propertyData.isEmpty() && !populationData.isEmpty()) {
+            availableActions.add(6); // Total market value per capita
+        }
+        
+        if (!propertyData.isEmpty() && !populationData.isEmpty() && !covidData.isEmpty()) {
+            availableActions.add(7); // Get correlation
+        }
+        
+        Collections.sort(availableActions);
+        return availableActions;
     }
 }
