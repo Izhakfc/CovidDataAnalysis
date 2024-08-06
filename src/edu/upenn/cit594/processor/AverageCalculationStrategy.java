@@ -1,5 +1,7 @@
 package edu.upenn.cit594.processor;
 
-public class AverageCalculationStrategy {
+import edu.upenn.cit594.util.PropertyData;
 
+public interface AverageCalculationStrategy {
+    double getValue(PropertyData propertyData);
 }

@@ -35,7 +35,10 @@ public class PropertyDataReader {
                 double livableArea = parseDoubleOrZero(values[livableAreaIndex]);
 
                 if (zipCode != null) {
-                    propertyDataList.add(new PropertyData(zipCode, marketValue, livableArea));
+                	if (marketValue != -1 || livableArea != -1) {
+                		propertyDataList.add(new PropertyData(zipCode, marketValue, livableArea));
+                    
+                }
                 }
             }
         }
@@ -60,13 +63,13 @@ public class PropertyDataReader {
 
     public double parseDoubleOrZero(String value) {
         try {
-        	// Handling null values
-        	if (value == null) {
-        	        return 0.0;
-        	    }
+            // Handling null values
+            if (value == null) {
+                return -1.0;
+            }
             return Double.parseDouble(value);
         } catch (NumberFormatException e) {
-            return 0.0;
+            return -1.0;
         }
     }
 }

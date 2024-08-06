@@ -1,23 +1,5 @@
 package edu.upenn.cit594.processor;
 
-// public class DataProcessor {
-
-//    public int getTotalPopulation(ArrayList populationData) {
-// 	int totalSum = 0;
-// 	for (PopulationData data: populationData) {
-// 		totalSum += data.getPopulation();}
-// 	return totalSum;
-// 	}
-
-
-
-
-
-
-  
-  
-// }
-
 import edu.upenn.cit594.util.CovidData;
 import edu.upenn.cit594.util.PropertyData;
 import edu.upenn.cit594.util.PopulationData;
@@ -57,7 +39,6 @@ public class DataProcessor {
         	String extractedDate = extractDate(timestamp);
             if (extractedDate != null && extractedDate.equals(date)) {
                 String zipCode = data.getZipCode();
-                System.out.println(zipCode);
                 int population = getPopulation(zipCode);
                 if (population > 0) {
                     double vaccinations = isPartial ? data.getPartiallyVaccinated() : data.getFullyVaccinated();
@@ -82,15 +63,17 @@ public class DataProcessor {
         double totalMarketValue = propertyDataList.stream()
                 .filter(p -> p.getZipCode().equals(zipCode))
                 .mapToDouble(PropertyData::getMarketValue)
+                .filter(value -> value != -1.0) // Filter out invalid values
                 .sum();
         int population = getPopulation(zipCode);
-        return population > 0 ? (int) totalMarketValue / population : 0;
+        return population > 0 ? (int) (totalMarketValue / population) : 0;
     }
 
     private int calculateAverage(String zipCode, AverageCalculationStrategy strategy) {
         return (int) propertyDataList.stream()
                 .filter(p -> p.getZipCode().equals(zipCode))
                 .mapToDouble(strategy::getValue)
+                .filter(value -> value != -1.0) // Filter out invalid values
                 .average()
                 .orElse(0.0);
     }
@@ -120,4 +103,3 @@ public class DataProcessor {
         }
     }
 }
-
