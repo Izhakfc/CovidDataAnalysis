@@ -54,60 +54,96 @@ public class DataProcessor {
     
     
     
-    public double getCorrelation(List<CovidData> covidData, String date, boolean isPartial, String zipCode) {
-    	TreeMap<String, Double> VacPerCapita = getVaccinationsPerCapita(date, isPartial);
-    	ArrayList<Double> vaccinationRates = new ArrayList<>();
-    	ArrayList<Double> marketValues = new ArrayList<>();
-    	
-    	for (Map.Entry<String, Double> entry: VacPerCapita.entrySet()) {
-    		 String entryZip = entry.getKey();
-    		 double vaccinations = entry.getValue();
-    	     double avgMarketValue = Double.valueOf(getAverageMarketValue(entryZip));
-    	     if (avgMarketValue > 0) {
-    	    	 vaccinationRates.add(vaccinations);
-    	    	 marketValues.add(avgMarketValue);
-    	     } 
-    		}
-    	    	
-    	return calculatePearsonCorrelation(vaccinationRates, marketValues);
-    	
-    }
+       // calc vaccination rate (so number of vaccinations per capita for that zip code)
+    private Map<String, Double> getAllVaccinationRates(boolean isPartial) {
+    	Map<String, Double> ratesByZipCode = new HashMap<String, Double>();
+        
+        for (CovidData data : covidDataList) {
+                String zipCode = data.getZipCode();
+            	int population = getPopulation(zipCode);
+                if (population > 0) {
+                    double vaccinationSum = isPartial ? data.getPartialVaccinations() : data.getFullVaccinations();     
+                    ratesByZipCode.put(zipCode, vaccinationSum / population);
+            }
+          }
+        return ratesByZipCode;
+        }
     
-    private double calculatePearsonCorrelation(List<Double> vaccinationRates, List<Double> marketValues) {
-    	
-    	int n = vaccinationRates.size();
-    	double meanVac = calculateMean(vaccinationRates);
-    	double meanMarket = calculateMean(marketValues);
-    	double covariance = 0; //numerator
-    	double varianceVac = 0;
-    	double varianceMarket = 0;
-    	
-    	for (int i = 0; i < n; i++) {
-    		double diffVacc = vaccinationRates.get(i) - meanVac;
-    		double diffMarket = marketValues.get(i) - meanMarket;
-    		covariance += diffVacc * diffMarket;
-    		varianceVac += diffVacc * diffVacc;
-    		varianceMarket += diffMarket * diffMarket;
-    	}
-    	
-    	double sqrt = Math.sqrt(varianceVac * varianceMarket);
-    	
-    	if (sqrt == 0.0) {
-    		return 0.0;
-    	}
-    	return covariance / sqrt;
-    	
-    	
-    	
-    }
+    private Map<String, Double> getAllPropertyValues() {
+    	Map<String, Double> propertyValuesByZipCode = new HashMap<String, Double>();
+        
+        for (PropertyData data : propertyDataList) {
+              propertyValuesByZipCode.put(data.getZipCode(), data.getMarketValue());
+            }
+        return propertyValuesByZipCode;
+          }
+      
     
-    private double calculateMean(List<Double> x) {
+    
+  public double getCorrelation(List<CovidData> covidData, boolean isPartial) {
+	  
+	Map<String, Double> vaccinationRates = getAllVaccinationRates(isPartial);
+	Map<String, Double> marketValues = getAllPropertyValues();
+	
+	ArrayList<Double> rates = new ArrayList<>();
+	ArrayList<Double> values = new ArrayList<>();
+	
+	
+	for (String zipCode : vaccinationRates.keySet()) {
+		if (marketValues.containsKey(zipCode)) {
+			rates.add(vaccinationRates.get(zipCode));
+			values.add(marketValues.get(zipCode));
+		}
+	}
+
+	// can't calc pearson correlation with little data
+	if (rates.size() < 2) {
+		System.out.println("There is not enough data in order for Pearson calculation to be calculated");
+		return 0;
+	}
+	
+    return calculatePearsonCorrelation(rates, values);
+	
+}
+
+
+  private double calculatePearsonCorrelation(ArrayList<Double> vaccinationRates, ArrayList<Double> marketValues) {
+	
+    int n = vaccinationRates.size();
+	
+	double meanVac = calculateMean(vaccinationRates);
+	double meanMarket = calculateMean(marketValues);
+	
+	double covariance = 0; //numerator
+	double varianceVac = 0;
+	double varianceMarket = 0;
+	
+	for (int i = 0; i < n; i++) {
+		double diffVacc = vaccinationRates.get(i) - meanVac;
+		double diffMarket = marketValues.get(i) - meanMarket;
+		
+		covariance += diffVacc * diffMarket;
+		varianceVac += diffVacc * diffVacc;
+		varianceMarket += diffMarket * diffMarket;
+	}
+	
+	double sqrt = Math.sqrt(varianceVac * varianceMarket);
+	if (sqrt == 0) {
+		return 0;
+	}
+	return covariance / sqrt;
+	
+}
+
+    private double calculateMean(ArrayList<Double> values) {
+    	
     	double sum = 0.0;
-    	for (Double value: x) {
+    	for (Double value : values) {
     		sum += value;
     	}
-    	return sum / x.size();
-    }
+	
+    	return sum / values.size();
+}
     
 
     public int getAverageMarketValue(String zipCode) {
