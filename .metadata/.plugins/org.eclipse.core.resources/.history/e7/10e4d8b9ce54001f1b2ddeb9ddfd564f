@@ -93,6 +93,7 @@ public class DataProcessor {
     	double sqrt = Math.sqrt(varianceVac * varianceMarket);
     	
     	if (sqrt == 0.0) {
+    		System.out.println("There is no correlation");
     		return 0.0;
     	}
     	return covariance / sqrt;

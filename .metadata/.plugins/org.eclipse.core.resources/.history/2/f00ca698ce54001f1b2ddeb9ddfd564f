@@ -33,6 +33,8 @@ public class CovidJSONReader {
 		FileReader fr;
 		Pattern regex = Pattern.compile("^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])\\s([01]\\d|2[0-3]):([0-5]\\d):([0-5]\\d)$");
 		Matcher matcher;
+		int partially_Vaccinated = 0;
+		int fully_Vaccinated = 0;
 		String zipCode;
 		String dateTime;
 		
@@ -50,11 +52,17 @@ public class CovidJSONReader {
 	
 				Object partiallyVaccinatedObj = line.get("partially_vaccinated");
 				
-				int partiallyVaccinated = parseIntOrZero(partiallyVaccinatedObj);
-                
+				if (partiallyVaccinatedObj != null && String.valueOf(partiallyVaccinatedObj).isEmpty()) {
+					
+					partially_Vaccinated = Integer.parseInt(line.get("partially_vaccinated").toString());
+					
+				} 
 				
 				Object fullyVaccinatedObj = line.get("fully_vaccinated");
-				int fullyVaccinated = parseIntOrZero(fullyVaccinatedObj);
+				
+				if (fullyVaccinatedObj != null && String.valueOf(fullyVaccinatedObj).isEmpty()) {
+					fully_Vaccinated = Integer.parseInt(line.get("fully_vaccinated").toString());				
+				}
 			
 		
 				if (line.get("etl_timestamp") == null || line.get("etl_timestamp") == "") {
@@ -65,7 +73,7 @@ public class CovidJSONReader {
 					matcher = regex.matcher((CharSequence) line.get("etl_timestamp"));
 					if (matcher.matches()) {
 						dateTime = (String) line.get("etl_timestamp");
-						CovidData covidLine = new CovidData(zipCode, partiallyVaccinated, fullyVaccinated, dateTime);
+						CovidData covidLine = new CovidData(zipCode, partially_Vaccinated, fully_Vaccinated, dateTime);
 						covidData.add(covidLine);
 					}
 					else {
@@ -80,16 +88,4 @@ public class CovidJSONReader {
 		}
 		return covidData;
 	}
-	 private int parseIntOrZero(Object value) {
-	        if (value instanceof Long) {
-	            return ((Long) value).intValue();
-	        } else if (value instanceof String) {
-	            try {
-	                return Integer.parseInt((String) value);
-	            } catch (NumberFormatException e) {
-	                return 0;
-	            }
-	        }
-	        return 0;
-	    }
 }

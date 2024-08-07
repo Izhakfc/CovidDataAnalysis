@@ -8,6 +8,11 @@
 		<item key="incremental" value="false"/>
 		<item key="isRegEx" value="false"/>
 		<list key="findhistory">
+			<item value="getVaccinations"/>
+			<item value="CharSequence"/>
+			<item value="getAverageMarketValue"/>
+			<item value="availableA"/>
+			<item value="calculatePearsonCorrelation"/>
 			<item value="isInitia"/>
 		</list>
 		<list key="replacehistory">
