@@ -1,0 +1,97 @@
+package edu.upenn.cit594.datamanagement;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.StringReader;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import edu.upenn.cit594.util.CovidData;
+
+public class CSVParser {
+    
+	CSVLexer lexer;
+	private String filename; 
+	
+    public CSVParser(CSVLexer lexer) {
+        this.lexer = lexer;
+    }
+    
+    public List<CovidData> readCovidDataCSV() throws IOException{
+		List<CovidData> covidData = new ArrayList<>();
+		String[] line;
+		int partiallyVaccinated;
+		int fullyVaccinated;
+		Map<String, Integer> columnIndexMap = new HashMap<String, Integer>();
+		Pattern regex = Pattern.compile("^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])\\s([01]\\d|2[0-3]):([0-5]\\d):([0-5]\\d)$");
+		Matcher matcher;
+			// get header line to be columns
+			if ((line = lexer.readRow()) != null) {
+				for (int i = 0; i < line.length; i++) {
+					columnIndexMap.put(line[i].toLowerCase(), i);
+				}
+			}
+			
+			if((!columnIndexMap.containsKey("zip_code") || 
+					!columnIndexMap.containsKey("partially_vaccinated") || 
+					!columnIndexMap.containsKey("fully_vaccinated") || 
+					!columnIndexMap.containsKey("etl_timestamp"))) {
+				System.out.println("One of required headers is missing");
+				return covidData;
+			}
+			
+			
+			
+			while((line = lexer.readRow()) != null) {
+				if (line[columnIndexMap.get("zip_code")].length() != 5) {
+					continue;
+				}
+				String zipCode = line[columnIndexMap.get("zip_code")];
+				
+				if (line[columnIndexMap.get("partially_vaccinated")] == null || line[columnIndexMap.get("partially_vaccinated")].isEmpty()){
+					partiallyVaccinated = 0;
+				}
+				else {
+					partiallyVaccinated = Integer.parseInt(line[columnIndexMap.get("partially_vaccinated")]);
+				}
+				
+				
+				if (line[columnIndexMap.get("fully_vaccinated")] == null|| line[columnIndexMap.get("fully_vaccinated")].isEmpty()){
+					fullyVaccinated = 0;
+				}
+				else {
+					fullyVaccinated = Integer.parseInt(line[columnIndexMap.get("fully_vaccinated")]);
+				}
+				if (line[columnIndexMap.get("etl_timestamp")] == null || line[columnIndexMap.get("etl_timestamp")].isEmpty()) {
+					continue;
+				}
+				
+				else {
+					matcher = regex.matcher(line[8]);
+					if (matcher.matches()) {
+						String dateTime = line[columnIndexMap.get("etl_timestamp")];
+						CovidData covidLine = new CovidData(zipCode, partiallyVaccinated, fullyVaccinated, dateTime);
+						covidData.add(covidLine);
+					}
+					else {
+					System.out.println("This line is being skipped because it does not have a valid date/time format.");
+					continue;
+				}
+			}
+		}
+		return covidData;
+			
+	}
+}
+    

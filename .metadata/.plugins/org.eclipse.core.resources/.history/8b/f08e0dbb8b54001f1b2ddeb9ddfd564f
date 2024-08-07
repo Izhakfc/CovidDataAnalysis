@@ -1,0 +1,307 @@
+package edu.upenn.cit594;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.*;
+import java.util.regex.*;
+import java.util.stream.Collectors;
+
+import edu.upenn.cit594.datamanagement.*;
+import edu.upenn.cit594.logging.Logger;
+import edu.upenn.cit594.util.*;
+import edu.upenn.cit594.processor.*;
+import edu.upenn.cit594.ui.UserInterface;
+
+public class Main {
+    // Declare static variables
+    public static String populationFilename = "population";
+    public static String propertyFilename = "properties";
+    public static String covidFilename = "covid";
+    
+    private static Logger logger = Logger.getInstance();
+    private static DataProcessor dataProcessor;
+    private static UserInterface ui;
+    private static Scanner scanner;
+
+    // Declare static data structures
+    private static List<PropertyData> propertyData = new ArrayList<>();
+    private static List<PopulationData> populationData = new ArrayList<>();
+    private static List<CovidData> covidData = new ArrayList<>();
+    
+    public static void main(String[] args) throws IOException {
+        // Process command-line arguments
+        processArguments(args);
+
+        // Log initial program execution only if a log file was specified
+        logEvent(String.join(" ", args));
+        
+        // Initialize components
+        dataProcessor = new DataProcessor(covidData, propertyData, populationData);
+        ui = new UserInterface();
+        scanner = new Scanner(System.in);
+
+        // Display available options immediately after processing arguments
+        List<Integer> availableActions = getAvailableActions();
+        
+        // Main program loop
+        while (true) {
+        	ui.displayMenu(availableActions);
+            int option = scanner.nextInt();
+            
+            logEvent(String.valueOf(option));
+
+            if (!availableActions.contains(option)) {
+                System.out.println("That's not a valid option, try again: \n");
+                logEvent("Invalid option: " + option);
+                continue;
+            }
+
+            if (!processMenuOption(option)) {
+                break;
+            }
+        }
+
+        scanner.close();
+        logger.close();
+    }
+
+    private static void processArguments(String[] args) throws IOException {
+        String filePattern = "^--(?<name>.+?)=(?<value>.+)$";
+        Pattern pattern = Pattern.compile(filePattern);
+
+        if (args.length == 0) {
+            System.out.println("No arguments provided. Only basic options will be available.");
+            return;
+        }
+
+        try {
+            for (String arg : args) {
+                Matcher matcher = pattern.matcher(arg);
+                if (matcher.matches()) {
+                    String name = matcher.group("name");
+                    String value = matcher.group("value");
+                    switch (name) {
+                        case "population":
+                            if (!value.isEmpty()) {
+                                PopulationDataReader populationReader = new PopulationDataReader(value);
+                                populationData = populationReader.readPopulationData();
+                            } else {
+                                System.out.println("Population file path is empty.");
+                            }
+                            break;
+                        case "properties":
+                            if (!value.isEmpty()) {
+                                PropertyDataReader propertyReader = new PropertyDataReader(value);
+                                propertyData = propertyReader.readPropertyData();
+                            } else {
+                                System.out.println("Properties file path is empty.");
+                            }
+                            break;
+                        case "covid":
+                            if (!value.isEmpty()) {
+                             if (value.endsWith(".csv")){
+                                 CharacterReader cr = new CharacterReader(value);
+                                 CSVLexer cl = new CSVLexer(cr);
+                                 CSVParser cp = new CSVParser(cl);
+                                 covidData = cp.readCovidDataCSV();
+                             }
+                             else {
+                              CovidJSONReader cjson = new CovidJSONReader();
+                              covidData = cjson.readCovidDataJson(value);
+                             }
+                            }
+                            break;
+                        case "log":
+                            if (!value.isEmpty()) {
+                                logger.setDestination(value);
+                            } else{
+                            	logger.setDestination(System.err);
+                            }
+                            break;
+                        default:
+                            System.out.println("Unknown argument: " + name);
+                    }
+                } else {
+                    System.out.println("Invalid argument format: " + arg);
+                }
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found: " + e.getMessage());
+        }
+        // Check if a log file was specified
+        if (!logger.isInitialized()) {
+        	System.out.println("No log file was specified, we will set the log file as 'log.txt'");
+        	logger.setDestination("log_test.txt");
+        }
+        
+    }
+
+    private static boolean processMenuOption(int option) {
+    	switch (option) {
+	        case 0:
+	            System.out.println("Exiting the program");
+	            return false;
+	        case 1:
+	            List<Integer> availableActions = getAvailableActions();
+	            String result = availableActions.stream()
+	                    .map(String::valueOf)
+	                    .collect(Collectors.joining(" "));
+	            System.out.println(formatOutput(result));
+	            break;
+            case 2:
+                logEvent(populationFilename);
+                int totalPopulation = dataProcessor.getTotalPopulation();
+                System.out.println(formatOutput(String.valueOf(totalPopulation)));
+                System.out.println("Total Population: " + totalPopulation + "\n");
+                break;
+            case 3:
+                String typeOfVaccination;
+                do {
+                    System.out.println("Do you want 'partial' or 'full' vaccinations?");
+                    typeOfVaccination = scanner.next().toLowerCase();
+                    logEvent(typeOfVaccination);
+                    if (!typeOfVaccination.equals("partial") && !typeOfVaccination.equals("full")) {
+                        System.out.println("That's not a valid option, try again.");
+                    }
+                } while (!typeOfVaccination.equals("partial") && !typeOfVaccination.equals("full"));
+
+                String date;
+                Pattern datePattern = Pattern.compile("^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$");
+                do {
+                    System.out.println("Can you please enter a date in the format (YYYY-MM-DD): ");
+                    date = scanner.next();
+                    logEvent(date);
+                    if (!datePattern.matcher(date).matches()) {
+                        System.out.println("That's not a valid date format, try again.");
+                    }
+                } while (!datePattern.matcher(date).matches());
+
+                logEvent(covidFilename + " " + populationFilename);
+                // Replace with actual implementation
+                boolean isPartial = typeOfVaccination.equals("partial");
+                TreeMap<String, Double> vaccinationsPerCapita = dataProcessor.getVaccinationsPerCapita(date, isPartial);
+                
+                if (vaccinationsPerCapita.isEmpty()) {
+                    System.out.println(formatOutput("0"));
+                } else {
+                    StringBuilder output = new StringBuilder();
+                    vaccinationsPerCapita.entrySet().stream()
+                            .sorted(Map.Entry.comparingByKey())
+                            .forEach(entry -> {
+                                output.append(entry.getKey()).append(" ")
+                                      .append(String.format("%.4f", entry.getValue())).append("\n");
+                            });
+                    System.out.println(formatOutput(output.toString().trim()));
+                }
+                break;
+            case 4:
+            case 5:
+            case 6:
+            case 7:
+                String zipCode;
+                do {
+                    System.out.println("Can you please enter a 5 digit zip code: ");
+                    zipCode = scanner.next();
+                    logEvent(zipCode);
+                    if (!zipCode.matches("\\d{5}")) {
+                        System.out.println("That's not a valid zip code, try again.");
+                    }
+                } while (!zipCode.matches("\\d{5}"));
+
+                switch (option) {
+                    case 4:
+                        logEvent(propertyFilename + " " + populationFilename);
+                        double averageMarketValue = dataProcessor.getAverageMarketValue(zipCode);
+                        System.out.println(formatOutput(String.valueOf(averageMarketValue)));
+                        System.out.println("Average Market Value for " + zipCode + ": " + averageMarketValue + "\n");
+                        break;
+                    case 5:
+                        logEvent(propertyFilename);
+                        double averageLivableArea = dataProcessor.getAverageLivableArea(zipCode);
+                        System.out.println(formatOutput(String.valueOf(averageLivableArea)));
+                        System.out.println("Average Livable Area for " + zipCode + ": " + averageLivableArea + "\n");
+                        break;
+                    case 6:
+                        logEvent(propertyFilename + " " + populationFilename);
+                        int totalMarketValuePerCapita = dataProcessor.getTotalMarketValuePerCapita(zipCode);
+                        System.out.println(formatOutput(String.valueOf(totalMarketValuePerCapita)));
+                        System.out.println("Total Market Value Per Capita for " + zipCode + ": " + totalMarketValuePerCapita);
+                        break;
+                    case 7:
+                        do {
+                            System.out.println("Do you want 'partial' or 'full' vaccinations?");
+                            typeOfVaccination = scanner.next().toLowerCase();
+                            logEvent(typeOfVaccination);
+                            if (!typeOfVaccination.equals("partial") && !typeOfVaccination.equals("full")) {
+                                System.out.println("That's not a valid option, try again.");
+                            }
+                        } while (!typeOfVaccination.equals("partial") && !typeOfVaccination.equals("full"));
+
+                       
+                        datePattern = Pattern.compile("^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$");
+                        do {
+                            System.out.println("Can you please enter a date in the format (YYYY-MM-DD): ");
+                            date = scanner.next();
+                            logEvent(date);
+                            if (!datePattern.matcher(date).matches()) {
+                                System.out.println("That's not a valid date format, try again.");
+                            }
+                        } while (!datePattern.matcher(date).matches());
+
+                        logEvent(covidFilename + " " + populationFilename);
+                        // Replace with actual implementation
+                        isPartial = typeOfVaccination.equals("partial");
+                        logEvent(propertyFilename + " " + populationFilename + " " + covidFilename);
+                        double pearsonCorrelation = dataProcessor.getCorrelation(covidData, date, isPartial, zipCode);
+                        System.out.println(formatOutput(String.valueOf(pearsonCorrelation)));
+                        System.out.println(pearsonCorrelation);
+                        break;
+                }
+                break;
+            default:
+                System.out.println("That's not a valid option, try again: \n");
+                logEvent("Invalid option: " + option);
+        }
+        return true;
+    }
+    private static void logEvent(String event) {
+        if (logger.isInitialized()) {
+            String currentTime = String.valueOf(System.currentTimeMillis());
+            logger.logEvent(currentTime + " " + event);
+        }
+    }
+    
+    private static String formatOutput(String result) {
+        return "BEGIN OUTPUT\n" + result + "\nEND OUTPUT";
+    }
+    
+    private static List<Integer> getAvailableActions() {
+        List<Integer> availableActions = new ArrayList<>();
+        availableActions.add(0); // Exit is always available
+        availableActions.add(1); // List available actions is always available
+        
+        if (!populationData.isEmpty()) {
+            availableActions.add(2); // Total population
+        }
+        
+        if (!covidData.isEmpty() && !populationData.isEmpty()) {
+            availableActions.add(3); // Vaccinations per capita
+        }
+        
+        if (!propertyData.isEmpty()) {
+            availableActions.add(4); // Average market value
+            availableActions.add(5); // Average livable area
+        }
+        
+        if (!propertyData.isEmpty() && !populationData.isEmpty()) {
+            availableActions.add(6); // Total market value per capita
+        }
+        
+        if (!propertyData.isEmpty() && !populationData.isEmpty() && !covidData.isEmpty()) {
+            availableActions.add(7); // Get correlation
+        }
+        
+        Collections.sort(availableActions);
+        return availableActions;
+    }
+}

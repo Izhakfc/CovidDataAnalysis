@@ -36,9 +36,6 @@ public class Main {
         logEvent(String.join(" ", args));
         
         // Initialize components
-        System.out.println(covidData);
-        System.out.println(propertyData);
-        System.out.println(populationData);
         dataProcessor = new DataProcessor(covidData, propertyData, populationData);
         ui = new UserInterface();
         scanner = new Scanner(System.in);
@@ -118,7 +115,7 @@ public class Main {
                             if (!value.isEmpty()) {
                                 logger.setDestination(value);
                             } else{
-                            	logger.setDestination(System.err);
+//                            	logger.setDestination(System.err);
                             }
                             break;
                         default:
@@ -132,10 +129,10 @@ public class Main {
             System.out.println("File not found: " + e.getMessage());
         }
         // Check if a log file was specified
-        if (!logger.isInitialized()) {
-        	System.out.println("No log file was specified, we will set the log file as 'log.txt'");
-        	logger.setDestination("log_test.txt");
-        }
+//        if (!logger.isInitialized()) {
+//        	System.out.println("No log file was specified, we will set the log file as 'log.txt'");
+//        	logger.setDestination("log_test.txt");
+//        }
         
     }
 
@@ -255,10 +252,6 @@ public class Main {
                         // Replace with actual implementation
                         isPartial = typeOfVaccination.equals("partial");
                         logEvent(propertyFilename + " " + populationFilename + " " + covidFilename);
-                        System.out.println(covidData);
-                        System.out.println(date);
-                        System.out.println(isPartial);
-                        System.out.println(zipCode);
                         double pearsonCorrelation = dataProcessor.getCorrelation(covidData, date, isPartial, zipCode);
                         System.out.println(formatOutput(String.valueOf(pearsonCorrelation)));
                         System.out.println(pearsonCorrelation);

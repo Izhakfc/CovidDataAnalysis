@@ -1,6 +1,7 @@
 package edu.upenn.cit594.logging;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.List;
 
@@ -42,6 +43,10 @@ public class Logger {
                 System.err.println("Error opening log file: " + e.getMessage());
             }
         }
+    }
+    
+    public void setDestination(PrintStream filename) {
+    		PrintWriter writer = new PrintWriter(System.err);
     }
     
     public void close() {

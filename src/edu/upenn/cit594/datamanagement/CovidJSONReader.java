@@ -17,6 +17,8 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import edu.upenn.cit594.util.CovidData;
+
 
 public class CovidJSONReader {
 
@@ -51,17 +53,19 @@ public class CovidJSONReader {
 				Object partiallyVaccinatedObj = line.get("partially_vaccinated");
 				
 				if (partiallyVaccinatedObj != null) {
+					
 					partially_Vaccinated = Integer.parseInt(line.get("partially_vaccinated").toString());
-				}
+					
+				} 
 				
 				Object fullyVaccinatedObj = line.get("fully_vaccinated");
 				
-				if (fullyVaccinatedObj != null) {
+				if (fullyVaccinatedObj != null && fullyVaccinatedObj != "") {
 					fully_Vaccinated = Integer.parseInt(line.get("fully_vaccinated").toString());				
 				}
 			
 		
-				if (line.get("etl_timestamp") == null) {
+				if (line.get("etl_timestamp") == null || line.get("etl_timestamp") == "") {
 					continue;
 				}
 				

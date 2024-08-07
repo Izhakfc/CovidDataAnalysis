@@ -5,8 +5,10 @@ import edu.upenn.cit594.util.PropertyData;
 import edu.upenn.cit594.util.PopulationData;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class DataProcessor {
@@ -32,22 +34,82 @@ public class DataProcessor {
                 .sum();
     }
 
-    public Map<String, Double> getVaccinationsPerCapita(String date, boolean isPartial) {
-        Map<String, Double> result = new HashMap<>();
+    public TreeMap<String, Double> getVaccinationsPerCapita(String date, boolean isPartial) {
+        TreeMap<String, Double> result = new TreeMap<>();
+       
         for (CovidData data : covidDataList) {
-        	String timestamp = data.getTimestamp();
+        	String timestamp = data.getDateTime();
         	String extractedDate = extractDate(timestamp);
             if (extractedDate != null && extractedDate.equals(date)) {
                 String zipCode = data.getZipCode();
                 int population = getPopulation(zipCode);
                 if (population > 0) {
-                    double vaccinations = isPartial ? data.getPartiallyVaccinated() : data.getFullyVaccinated();
+                    double vaccinations = isPartial ? data.getPartialVaccinations() : data.getFullVaccinations();
                     result.put(zipCode, vaccinations / population);
                 }
             }
         }
         return result;
     }
+    
+    
+    
+    public double getCorrelation(List<CovidData> covidData, String date, boolean isPartial, String zipCode) {
+    	TreeMap<String, Double> VacPerCapita = getVaccinationsPerCapita(date, isPartial);
+    	ArrayList<Double> vaccinationRates = new ArrayList<>();
+    	ArrayList<Double> marketValues = new ArrayList<>();
+    	
+    	for (Map.Entry<String, Double> entry: VacPerCapita.entrySet()) {
+    		 String entryZip = entry.getKey();
+    		 double vaccinations = entry.getValue();
+    	     double avgMarketValue = Double.valueOf(getAverageMarketValue(entryZip));
+    	     if (avgMarketValue > 0) {
+    	    	 vaccinationRates.add(vaccinations);
+    	    	 marketValues.add(avgMarketValue);
+    	     } 
+    		}
+    	    	
+    	return calculatePearsonCorrelation(vaccinationRates, marketValues);
+    	
+    }
+    
+    private double calculatePearsonCorrelation(List<Double> vaccinationRates, List<Double> marketValues) {
+    	
+    	int n = vaccinationRates.size();
+    	double meanVac = calculateMean(vaccinationRates);
+    	double meanMarket = calculateMean(marketValues);
+    	double covariance = 0; //numerator
+    	double varianceVac = 0;
+    	double varianceMarket = 0;
+    	
+    	for (int i = 0; i < n; i++) {
+    		double diffVacc = vaccinationRates.get(i) - meanVac;
+    		double diffMarket = marketValues.get(i) - meanMarket;
+    		covariance += diffVacc * diffMarket;
+    		varianceVac += diffVacc * diffVacc;
+    		varianceMarket += diffMarket * diffMarket;
+    	}
+    	
+    	double sqrt = Math.sqrt(varianceVac * varianceMarket);
+    	
+    	if (sqrt == 0.0) {
+    		System.out.println("There is no correlation");
+    		return 0.0;
+    	}
+    	return covariance / sqrt;
+    	
+    	
+    	
+    }
+    
+    private double calculateMean(List<Double> x) {
+    	double sum = 0.0;
+    	for (Double value: x) {
+    		sum += value;
+    	}
+    	return sum / x.size();
+    }
+    
 
     public int getAverageMarketValue(String zipCode) {
         return averageMarketValueCache.computeIfAbsent(zipCode, 

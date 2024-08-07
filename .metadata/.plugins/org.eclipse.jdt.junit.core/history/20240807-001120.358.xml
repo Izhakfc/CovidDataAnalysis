@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?><testrun name="BasicTests" project="groupProject" tests="3" started="1" failures="0" errors="0" ignored="0">
+  <testsuite name="edu.upenn.cit594.studenttests.BasicTests" displayname="BasicTests" uniqueid="[engine:junit-vintage]/[runner:edu.upenn.cit594.studenttests.BasicTests]">
+    <testcase name="testSpeed" classname="edu.upenn.cit594.studenttests.BasicTests" time="5.781" displayname="testSpeed" uniqueid="[engine:junit-vintage]/[runner:edu.upenn.cit594.studenttests.BasicTests]/[test:testSpeed(edu.upenn.cit594.studenttests.BasicTests)]"/>
+    <testcase name="testTwice" classname="edu.upenn.cit594.studenttests.BasicTests" incomplete="true" displayname="testTwice" uniqueid="[engine:junit-vintage]/[runner:edu.upenn.cit594.studenttests.BasicTests]/[test:testTwice(edu.upenn.cit594.studenttests.BasicTests)]"/>
+    <testcase name="testActivities" classname="edu.upenn.cit594.studenttests.BasicTests" incomplete="true" displayname="testActivities" uniqueid="[engine:junit-vintage]/[runner:edu.upenn.cit594.studenttests.BasicTests]/[test:testActivities(edu.upenn.cit594.studenttests.BasicTests)]"/>
+  </testsuite>
+</testrun>

@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import edu.upenn.cit594.util.CovidData;
+
 public class CSVParser {
     
 	CSVLexer lexer;
@@ -76,7 +78,7 @@ public class CSVParser {
 				}
 				
 				else {
-					matcher = regex.matcher(line[8]);
+					matcher = regex.matcher(line[columnIndexMap.get("etl_timestamp")]);
 					if (matcher.matches()) {
 						String dateTime = line[columnIndexMap.get("etl_timestamp")];
 						CovidData covidLine = new CovidData(zipCode, partiallyVaccinated, fullyVaccinated, dateTime);

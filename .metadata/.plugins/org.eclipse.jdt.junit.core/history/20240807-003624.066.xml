@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?><testrun name="BasicTests" project="groupProject" tests="3" started="3" failures="1" errors="2" ignored="0">
+  <testsuite name="edu.upenn.cit594.studenttests.BasicTests" time="0.017" displayname="BasicTests" uniqueid="[engine:junit-vintage]/[runner:edu.upenn.cit594.studenttests.BasicTests]">
+    <testcase name="testSpeed" classname="edu.upenn.cit594.studenttests.BasicTests" time="0.0" displayname="testSpeed" uniqueid="[engine:junit-vintage]/[runner:edu.upenn.cit594.studenttests.BasicTests]/[test:testSpeed(edu.upenn.cit594.studenttests.BasicTests)]">
+      <failure>java.lang.AssertionError: No assessable output detected&#13;
+	at org.junit.Assert.fail(Assert.java:89)&#13;
+	at org.junit.Assert.assertTrue(Assert.java:42)&#13;
+	at org.junit.Assert.assertFalse(Assert.java:65)&#13;
+	at edu.upenn.cit594.studenttests.BasicTests.testSpeed(BasicTests.java:105)&#13;
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)&#13;
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)&#13;
+	at java.base/java.lang.Thread.run(Thread.java:1583)&#13;
+&#13;
+</failure>
+    </testcase>
+    <testcase name="testTwice" classname="edu.upenn.cit594.studenttests.BasicTests" time="0.0" displayname="testTwice" uniqueid="[engine:junit-vintage]/[runner:edu.upenn.cit594.studenttests.BasicTests]/[test:testTwice(edu.upenn.cit594.studenttests.BasicTests)]">
+      <error>java.lang.NullPointerException: Cannot invoke "java.util.Collection.size()" because "c" is null&#13;
+	at java.base/java.util.HashSet.&lt;init&gt;(HashSet.java:120)&#13;
+	at edu.upenn.cit594.studenttests.BasicTests.testTwice(BasicTests.java:146)&#13;
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)&#13;
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)&#13;
+	at java.base/java.lang.Thread.run(Thread.java:1583)&#13;
+&#13;
+</error>
+    </testcase>
+    <testcase name="testActivities" classname="edu.upenn.cit594.studenttests.BasicTests" time="0.017" displayname="testActivities" uniqueid="[engine:junit-vintage]/[runner:edu.upenn.cit594.studenttests.BasicTests]/[test:testActivities(edu.upenn.cit594.studenttests.BasicTests)]">
+      <error>java.lang.NullPointerException: Cannot invoke "java.util.List.equals(Object)" because "mResults1" is null&#13;
+	at edu.upenn.cit594.studenttests.BasicTests.testActivities(BasicTests.java:175)&#13;
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)&#13;
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)&#13;
+	at java.base/java.lang.Thread.run(Thread.java:1583)&#13;
+&#13;
+</error>
+    </testcase>
+  </testsuite>
+</testrun>
