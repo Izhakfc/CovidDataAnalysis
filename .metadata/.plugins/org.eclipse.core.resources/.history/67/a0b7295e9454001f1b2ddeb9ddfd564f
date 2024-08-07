@@ -52,7 +52,7 @@ public class CovidJSONReader {
 	
 				Object partiallyVaccinatedObj = line.get("partially_vaccinated");
 				
-				if (partiallyVaccinatedObj != null && String.valueOf(partiallyVaccinatedObj).isEmpty()) {
+				if (partiallyVaccinatedObj != null) {
 					
 					partially_Vaccinated = Integer.parseInt(line.get("partially_vaccinated").toString());
 					
@@ -60,7 +60,7 @@ public class CovidJSONReader {
 				
 				Object fullyVaccinatedObj = line.get("fully_vaccinated");
 				
-				if (fullyVaccinatedObj != null && String.valueOf(fullyVaccinatedObj).isEmpty()) {
+				if (fullyVaccinatedObj != null && fullyVaccinatedObj != "") {
 					fully_Vaccinated = Integer.parseInt(line.get("fully_vaccinated").toString());				
 				}
 			
