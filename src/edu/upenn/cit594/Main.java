@@ -32,25 +32,23 @@ public class Main {
         // Process command-line arguments
         processArguments(args);
 
-        // Check if a log file was specified
-        if (!logger.isInitialized()) {
-            System.out.println("No log file specified. Logging will be disabled.");
-        } else {
-            // Log initial program execution only if a log file was specified
-            logEvent(String.join(" ", args));
-        }
-
+        // Log initial program execution only if a log file was specified
+        logEvent(String.join(" ", args));
+        
         // Initialize components
+        System.out.println(covidData);
+        System.out.println(propertyData);
+        System.out.println(populationData);
         dataProcessor = new DataProcessor(covidData, propertyData, populationData);
         ui = new UserInterface();
         scanner = new Scanner(System.in);
 
         // Display available options immediately after processing arguments
         List<Integer> availableActions = getAvailableActions();
-
+        
         // Main program loop
         while (true) {
-            ui.displayMenu();
+        	ui.displayMenu(availableActions);
             int option = scanner.nextInt();
             
             logEvent(String.valueOf(option));
@@ -104,17 +102,23 @@ public class Main {
                             break;
                         case "covid":
                             if (!value.isEmpty()) {
-                                CovidDataReader covidReader = value.endsWith(".csv") ? new CovidCSVReader(value) : new CovidJSONReader(value);
-                                covidData = covidReader.readCovidData();
-                            } else {
-                                System.out.println("Covid file path is empty.");
+                             if (value.endsWith(".csv")){
+                                 CharacterReader cr = new CharacterReader(value);
+                                 CSVLexer cl = new CSVLexer(cr);
+                                 CSVParser cp = new CSVParser(cl);
+                                 covidData = cp.readCovidDataCSV();
+                             }
+                             else {
+                              CovidJSONReader cjson = new CovidJSONReader();
+                              covidData = cjson.readCovidDataJson(value);
+                             }
                             }
                             break;
                         case "log":
                             if (!value.isEmpty()) {
                                 logger.setDestination(value);
-                            } else {
-                                System.out.println("Log file path is empty. Logging will be disabled.");
+                            } else{
+                            	logger.setDestination(System.err);
                             }
                             break;
                         default:
@@ -127,6 +131,12 @@ public class Main {
         } catch (FileNotFoundException e) {
             System.out.println("File not found: " + e.getMessage());
         }
+        // Check if a log file was specified
+        if (!logger.isInitialized()) {
+        	System.out.println("No log file was specified, we will set the log file as 'log.txt'");
+        	logger.setDestination("log_test.txt");
+        }
+        
     }
 
     private static boolean processMenuOption(int option) {
@@ -172,7 +182,7 @@ public class Main {
                 logEvent(covidFilename + " " + populationFilename);
                 // Replace with actual implementation
                 boolean isPartial = typeOfVaccination.equals("partial");
-                Map<String, Double> vaccinationsPerCapita = dataProcessor.getVaccinationsPerCapita(date, isPartial);
+                TreeMap<String, Double> vaccinationsPerCapita = dataProcessor.getVaccinationsPerCapita(date, isPartial);
                 
                 if (vaccinationsPerCapita.isEmpty()) {
                     System.out.println(formatOutput("0"));
@@ -221,10 +231,37 @@ public class Main {
                         System.out.println("Total Market Value Per Capita for " + zipCode + ": " + totalMarketValuePerCapita);
                         break;
                     case 7:
-                        logEvent(propertyFilename + " " + populationFilename + " " + covidFilename);
+                        do {
+                            System.out.println("Do you want 'partial' or 'full' vaccinations?");
+                            typeOfVaccination = scanner.next().toLowerCase();
+                            logEvent(typeOfVaccination);
+                            if (!typeOfVaccination.equals("partial") && !typeOfVaccination.equals("full")) {
+                                System.out.println("That's not a valid option, try again.");
+                            }
+                        } while (!typeOfVaccination.equals("partial") && !typeOfVaccination.equals("full"));
+
+                       
+                        datePattern = Pattern.compile("^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$");
+                        do {
+                            System.out.println("Can you please enter a date in the format (YYYY-MM-DD): ");
+                            date = scanner.next();
+                            logEvent(date);
+                            if (!datePattern.matcher(date).matches()) {
+                                System.out.println("That's not a valid date format, try again.");
+                            }
+                        } while (!datePattern.matcher(date).matches());
+
+                        logEvent(covidFilename + " " + populationFilename);
                         // Replace with actual implementation
-                        System.out.println(formatOutput("Get Correlation"));
-                        System.out.println("Get Correlation"); // Replace with actual implementation aswell
+                        isPartial = typeOfVaccination.equals("partial");
+                        logEvent(propertyFilename + " " + populationFilename + " " + covidFilename);
+                        System.out.println(covidData);
+                        System.out.println(date);
+                        System.out.println(isPartial);
+                        System.out.println(zipCode);
+                        double pearsonCorrelation = dataProcessor.getCorrelation(covidData, date, isPartial, zipCode);
+                        System.out.println(formatOutput(String.valueOf(pearsonCorrelation)));
+                        System.out.println(pearsonCorrelation);
                         break;
                 }
                 break;
