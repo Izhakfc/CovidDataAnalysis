@@ -115,7 +115,8 @@ public class Main {
                             if (!value.isEmpty()) {
                                 logger.setDestination(value);
                             } else{
-//                            	logger.setDestination(System.err);
+                            	System.out.println("This is an invalid argument. No name was provided");
+                            	return;
                             }
                             break;
                         default:
@@ -129,10 +130,10 @@ public class Main {
             System.out.println("File not found: " + e.getMessage());
         }
         // Check if a log file was specified
-//        if (!logger.isInitialized()) {
-//        	System.out.println("No log file was specified, we will set the log file as 'log.txt'");
-//        	logger.setDestination("log_test.txt");
-//        }
+        if (!logger.isInitialized()) {
+        	System.out.println("No log file was specified, we will write to System.err'");
+        	logger.setDestination(System.err);
+        }
         
     }
 
@@ -197,7 +198,6 @@ public class Main {
             case 4:
             case 5:
             case 6:
-            case 7:
                 String zipCode;
                 do {
                     System.out.println("Can you please enter a 5 digit zip code: ");
@@ -227,37 +227,25 @@ public class Main {
                         System.out.println(formatOutput(String.valueOf(totalMarketValuePerCapita)));
                         System.out.println("Total Market Value Per Capita for " + zipCode + ": " + totalMarketValuePerCapita);
                         break;
-                    case 7:
-                        do {
-                            System.out.println("Do you want 'partial' or 'full' vaccinations?");
-                            typeOfVaccination = scanner.next().toLowerCase();
-                            logEvent(typeOfVaccination);
-                            if (!typeOfVaccination.equals("partial") && !typeOfVaccination.equals("full")) {
-                                System.out.println("That's not a valid option, try again.");
-                            }
-                        } while (!typeOfVaccination.equals("partial") && !typeOfVaccination.equals("full"));
+                } break;
+            case 7:
+                do {
+                    System.out.println("Do you want 'partial' or 'full' vaccinations?");
+                    typeOfVaccination = scanner.next().toLowerCase();
+                    logEvent(typeOfVaccination);
+                    if (!typeOfVaccination.equals("partial") && !typeOfVaccination.equals("full")) {
+                        System.out.println("That's not a valid option, try again.");
+                    }
+                } while (!typeOfVaccination.equals("partial") && !typeOfVaccination.equals("full"));
 
-                       
-                        datePattern = Pattern.compile("^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$");
-                        do {
-                            System.out.println("Can you please enter a date in the format (YYYY-MM-DD): ");
-                            date = scanner.next();
-                            logEvent(date);
-                            if (!datePattern.matcher(date).matches()) {
-                                System.out.println("That's not a valid date format, try again.");
-                            }
-                        } while (!datePattern.matcher(date).matches());
-
-                        logEvent(covidFilename + " " + populationFilename);
-                        // Replace with actual implementation
-                        isPartial = typeOfVaccination.equals("partial");
-                        logEvent(propertyFilename + " " + populationFilename + " " + covidFilename);
-                        double pearsonCorrelation = dataProcessor.getCorrelation(covidData, date, isPartial, zipCode);
-                        System.out.println(formatOutput(String.valueOf(pearsonCorrelation)));
-                        System.out.println(pearsonCorrelation);
-                        break;
-                }
+                isPartial = typeOfVaccination.equals("partial");
+                logEvent(propertyFilename + " " + populationFilename + " " + covidFilename);
+               
+                double pearsonCorrelation = dataProcessor.getCorrelation(covidData, isPartial);
+                System.out.println(formatOutput(String.valueOf(pearsonCorrelation)));
+                System.out.println(pearsonCorrelation);
                 break;
+
             default:
                 System.out.println("That's not a valid option, try again: \n");
                 logEvent("Invalid option: " + option);
